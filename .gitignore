@@ -1,0 +1,7 @@
+# Ignora tutto nel repository attuale
+*
+# Whitelist
+!.gitignore
+!Makefile
+!README
+!Vagrantfile

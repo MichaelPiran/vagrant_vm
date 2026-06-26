@@ -1,0 +1,2 @@
+Stop-Process -Name "vagrant" -Force -ErrorAction SilentlyContinue
+Stop-Process -Name "ruby" -Force -ErrorAction SilentlyContinue 
