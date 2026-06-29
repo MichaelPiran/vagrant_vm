@@ -2,10 +2,11 @@ VM_NAME = ENV['VM_NAME'] || "default-hyperv-vm"
 VM_MEM  = ENV['VM_MEMORY'] || "2048"
 VM_CPUS = ENV['VM_CPUS'] || "2"
 VM_IP   = ENV['VM_IP'] || "192.168.0.10"
+VM_BOX  = ENV['VM_BOX'] || "generic/ubuntu2204"
 VM_GW   = "192.168.0.1"
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "generic/ubuntu2204"
+  config.vm.box = VM_BOX
   config.vm.hostname = VM_NAME
 
   config.vm.provider "hyperv" do |hv|

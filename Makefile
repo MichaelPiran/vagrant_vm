@@ -1,10 +1,11 @@
 # RUN COMMAND WITH POWERSHELL ADMIN
 
-VM_NAME=test-vm
+VM_NAME=debian12-vm
 VM_MEMORY=2048
 VM_CPUS=2
 VM_IP=192.168.0.10
-
+# VM_BOX=generic/ubuntu2204 
+VM_BOX=generic/debian12
 .PHONY: new up destroy list start
 
 new:
