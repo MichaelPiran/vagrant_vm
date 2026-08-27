@@ -1,11 +1,14 @@
 # RUN COMMAND WITH POWERSHELL ADMIN
 
-VM_NAME=debian12-vm
-VM_MEMORY=4096
-VM_CPUS=2
-VM_IP=192.168.0.10
-# VM_BOX=generic/ubuntu2204 
-VM_BOX=generic/debian12
+VM ?= debian12-vm
+CONFIG_FILE := configs/$(VM).env
+
+ifeq ($(wildcard $(CONFIG_FILE)),)
+$(error Configurazione '$(CONFIG_FILE)' non trovata. Usa VM=<nome-config>)
+endif
+
+include $(CONFIG_FILE)
+
 .PHONY: new up destroy list start connect
 
 new:
@@ -28,8 +31,12 @@ up:
 	@powershell -Command "\
 		$$env:VM_NAME='$(VM_NAME)';\
 		$$env:VM_MEMORY='$(VM_MEMORY)';\
+		$$env:VM_MAX_MEMORY='$(VM_MAX_MEMORY)';\
 		$$env:VM_CPUS='$(VM_CPUS)';\
 		$$env:VM_IP='$(VM_IP)';\
+		$$env:VM_GATEWAY='$(VM_GATEWAY)';\
+		$$env:VM_SWITCH='$(VM_SWITCH)';\
+		$$env:VM_BOX='$(VM_BOX)';\
 		cd '.\$(VM_NAME)';\
 		vagrant up --provider=hyperv"
 
@@ -77,14 +84,13 @@ destroy:
 list:
 	@powershell -Command "Get-VM | Select-Object Name, State, CPUUsage, MemoryAssigned, Uptime | Format-Table -Autosize"
 
-VM_NAME_BOOT=test-vm-5
 start:
 	@powershell -Command "\
-		if (Get-VM -Name '$(VM_NAME_BOOT)' -ErrorAction SilentlyContinue) {\
-			Write-Host 'Starting VM: $(VM_NAME_BOOT)...' -ForegroundColor Cyan;\
-			Start-VM -Name '$(VM_NAME_BOOT)';\
-			Write-Host 'VM $(VM_NAME_BOOT) is now powering up.' -ForegroundColor Green;\
+		if (Get-VM -Name '$(VM_NAME)' -ErrorAction SilentlyContinue) {\
+			Write-Host 'Starting VM: $(VM_NAME)...' -ForegroundColor Cyan;\
+			Start-VM -Name '$(VM_NAME)';\
+			Write-Host 'VM $(VM_NAME) is now powering up.' -ForegroundColor Green;\
 		} else {\
-			Write-Host 'Error: VM \"$(VM_NAME_BOOT)\" does not exist on this Hyper-V host.' -ForegroundColor Red;\
+			Write-Host 'Error: VM \"$(VM_NAME)\" does not exist on this Hyper-V host.' -ForegroundColor Red;\
 			exit 1;\
 		}"

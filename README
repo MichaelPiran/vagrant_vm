@@ -1,2 +1,48 @@
+# Gestione VM Vagrant con Hyper-V
+
+Eseguire i comandi da PowerShell come amministratore.
+
+## Selezione della VM
+
+Ogni VM ha un file `configs/<nome>.env`. Il parametro `VM` indica al
+Makefile quale configurazione caricare:
+
+```powershell
+make new VM=debian12-vm
+make up VM=debian12-vm
+make connect VM=debian12-vm
+make start VM=debian12-vm
+make destroy VM=debian12-vm
+```
+
+Se `VM` non viene specificato, viene usata `debian12-vm`:
+
+```powershell
+make up
+```
+
+Il comando `make list` mostra tutte le VM Hyper-V.
+
+## Aggiunta di una VM
+
+Creare, per esempio, `configs/ubuntu-vm.env`:
+
+```ini
+VM_NAME=ubuntu-vm
+VM_MEMORY=4096
+VM_MAX_MEMORY=10240
+VM_CPUS=2
+VM_IP=192.168.0.11
+VM_GATEWAY=192.168.0.1
+VM_SWITCH=VMSwitchNat
+VM_BOX=generic/ubuntu2204
+```
+
+Poi eseguire:
+
+```powershell
+make new VM=ubuntu-vm
+make up VM=ubuntu-vm
+```
 Stop-Process -Name "vagrant" -Force -ErrorAction SilentlyContinue
 Stop-Process -Name "ruby" -Force -ErrorAction SilentlyContinue 

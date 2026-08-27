@@ -1,9 +1,11 @@
 VM_NAME = ENV['VM_NAME'] || "default-hyperv-vm"
 VM_MEM  = ENV['VM_MEMORY'] || "2048"
+VM_MAX_MEM = ENV['VM_MAX_MEMORY'] || "10240"
 VM_CPUS = ENV['VM_CPUS'] || "2"
 VM_IP   = ENV['VM_IP'] || "192.168.0.10"
 VM_BOX  = ENV['VM_BOX'] || "generic/ubuntu2204"
-VM_GW   = "192.168.0.1"
+VM_GW   = ENV['VM_GATEWAY'] || "192.168.0.1"
+VM_SWITCH = ENV['VM_SWITCH'] || "VMSwitchNat"
 
 Vagrant.configure("2") do |config|
   config.vm.box = VM_BOX
@@ -12,11 +14,11 @@ Vagrant.configure("2") do |config|
   config.vm.provider "hyperv" do |hv|
     hv.cpus = VM_CPUS.to_i
     hv.memory = VM_MEM.to_i # In MB
-    hv.maxmemory = 10240
+    hv.maxmemory = VM_MAX_MEM.to_i
     hv.vmname = VM_NAME
   end
 
-  config.vm.network "private_network", bridge: "VMSwitchNat"
+  config.vm.network "private_network", bridge: VM_SWITCH
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
   # Questo script viene eseguito come root dentro la VM al primo avvio
