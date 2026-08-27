@@ -9,13 +9,16 @@ $(error Configurazione '$(CONFIG_FILE)' non trovata. Usa VM=<nome-config>)
 endif
 
 include $(CONFIG_FILE)
+VM_IP_TIMEOUT ?= 120
 
 .PHONY: new up destroy list start connect
 
 new:
 	@powershell -Command "\
 		if (!(Test-Path '.\$(VM_NAME)')) { New-Item -ItemType Directory -Path '.\$(VM_NAME)' | Out-Null };\
+		if (!(Test-Path '.\$(VM_NAME)\provisioners')) { New-Item -ItemType Directory -Path '.\$(VM_NAME)\provisioners' | Out-Null };\
 		Copy-Item -Path '.\Vagrantfile' -Destination '.\$(VM_NAME)\Vagrantfile' -Force;\
+		Copy-Item -Path '.\provisioners\*' -Destination '.\$(VM_NAME)\provisioners' -Recurse -Force;\
 		$$date = (Get-Date -Format 'dd/MM/yyyy HH:mm:ss');\
 		$$content = @('=======================================',\
 		'   INFO VM',\
@@ -28,7 +31,7 @@ new:
 		'=======================================');\
 		$$content | Out-File -FilePath '.\$(VM_NAME)\info.txt' -Encoding utf8"
 
-up:
+up: new
 	@powershell -Command "\
 		$$env:VM_NAME='$(VM_NAME)';\
 		$$env:VM_MEMORY='$(VM_MEMORY)';\
@@ -38,6 +41,10 @@ up:
 		$$env:VM_GATEWAY='$(VM_GATEWAY)';\
 		$$env:VM_SWITCH='$(VM_SWITCH)';\
 		$$env:VM_BOX='$(VM_BOX)';\
+		$$env:VM_BOX_VERSION='$(VM_BOX_VERSION)';\
+		$$env:VM_BOX_ARCHITECTURE='$(VM_BOX_ARCHITECTURE)';\
+		$$env:VM_PROVISIONER='$(VM_PROVISIONER)';\
+		$$env:VM_IP_TIMEOUT='$(VM_IP_TIMEOUT)';\
 		cd '.\$(VM_NAME)';\
 		vagrant up --provider=hyperv"
 
@@ -77,8 +84,7 @@ destroy:
 		$$sshKeygen = Join-Path $$openSshDir 'ssh-keygen.exe';\
 		$$knownHosts = Join-Path $$HOME '.ssh\known_hosts';\
 		if ((Test-Path $$sshKeygen) -and (Test-Path $$knownHosts)) {\
-			& $$sshKeygen -R '$(VM_IP)' -f $$knownHosts | Out-Null;\
-			if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE };\
+			& $$sshKeygen -R '$(VM_IP)' -f $$knownHosts 2>$$null | Out-Null;\
 			Remove-Item ($$knownHosts + '.old') -Force -ErrorAction SilentlyContinue\
 		}"
 

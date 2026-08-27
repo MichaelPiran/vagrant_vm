@@ -36,6 +36,30 @@ make up VM=ubuntu-vm
 
 Il comando `make list` mostra tutte le VM Hyper-V.
 
+## Provisioning della rete
+
+La configurazione di ogni VM seleziona esplicitamente il provisioner:
+
+- `VM_PROVISIONER=ubuntu` usa Netplan;
+- `VM_PROVISIONER=debian` usa cloud-init per il primo IP, quindi rende la
+	configurazione persistente con `ifupdown` o `systemd-networkd`.
+
+Gli script specifici sono nella directory `provisioners`. Lo script comune
+configura SSH, tastiera e il servizio KVP che permette a Hyper-V di leggere gli
+indirizzi della VM. Gli script di rete configurano `VM_IP`, `VM_GATEWAY` e DNS.
+
+`make up` copia sempre il Vagrantfile e i provisioner aggiornati nella directory
+della VM prima di avviarla.
+
+Versione e architettura sono fissate con `VM_BOX_VERSION` e
+`VM_BOX_ARCHITECTURE`. Questo evita di usare una vecchia immagine locale che
+Vagrant potrebbe considerare erroneamente aggiornata. Per Debian 12 usare la
+versione `4.3.12` con architettura `amd64`.
+
+Il provider deve comunque ottenere un primo indirizzo dalla box per collegarsi
+via SSH ed eseguire il provisioner. Se questo non avviene, verificare prima la
+versione della box e i servizi di integrazione Hyper-V inclusi nell'immagine.
+
 ## Aggiunta di una VM
 
 Creare, per esempio, `configs/ubuntu-vm.env`:
@@ -49,6 +73,10 @@ VM_IP=192.168.0.11
 VM_GATEWAY=192.168.0.1
 VM_SWITCH=VMSwitchNat
 VM_BOX=generic/ubuntu2204
+VM_BOX_VERSION=4.3.12
+VM_BOX_ARCHITECTURE=amd64
+VM_PROVISIONER=ubuntu
+VM_IP_TIMEOUT=120
 ```
 
 Poi eseguire:
@@ -57,5 +85,3 @@ Poi eseguire:
 make new VM=ubuntu-vm
 make up VM=ubuntu-vm
 ```
-Stop-Process -Name "vagrant" -Force -ErrorAction SilentlyContinue
-Stop-Process -Name "ruby" -Force -ErrorAction SilentlyContinue 

@@ -5,3 +5,5 @@
 !Makefile
 !README
 !Vagrantfile
+!provisioners/
+!provisioners/*.sh
