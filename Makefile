@@ -1,5 +1,6 @@
 # RUN COMMAND WITH POWERSHELL ADMIN
 
+-include local.mk
 VM ?= debian12-vm
 CONFIG_FILE := configs/$(VM).env
 

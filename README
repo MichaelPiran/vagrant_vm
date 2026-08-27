@@ -15,10 +15,23 @@ make start VM=debian12-vm
 make destroy VM=debian12-vm
 ```
 
-Se `VM` non viene specificato, viene usata `debian12-vm`:
+Per impostare la VM predefinita locale senza modificare il Makefile, creare
+`local.mk` (ignorato da Git):
+
+```makefile
+VM = debian12-vm
+```
+
+Da quel momento non è necessario specificare `VM`:
 
 ```powershell
 make up
+```
+
+Il parametro sulla riga di comando continua ad avere la precedenza:
+
+```powershell
+make up VM=ubuntu-vm
 ```
 
 Il comando `make list` mostra tutte le VM Hyper-V.
