@@ -12,6 +12,7 @@ Vagrant.configure("2") do |config|
   config.vm.provider "hyperv" do |hv|
     hv.cpus = VM_CPUS.to_i
     hv.memory = VM_MEM.to_i # In MB
+    hv.maxmemory = 10240
     hv.vmname = VM_NAME
   end
 

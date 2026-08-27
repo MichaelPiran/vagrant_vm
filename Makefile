@@ -1,12 +1,12 @@
 # RUN COMMAND WITH POWERSHELL ADMIN
 
 VM_NAME=debian12-vm
-VM_MEMORY=2048
+VM_MEMORY=4096
 VM_CPUS=2
 VM_IP=192.168.0.10
 # VM_BOX=generic/ubuntu2204 
 VM_BOX=generic/debian12
-.PHONY: new up destroy list start
+.PHONY: new up destroy list start connect
 
 new:
 	@powershell -Command "\
@@ -33,13 +33,45 @@ up:
 		cd '.\$(VM_NAME)';\
 		vagrant up --provider=hyperv"
 
+connect:
+	@powershell -Command "\
+		$$openSshDir = Join-Path $$env:WINDIR 'Sysnative\OpenSSH';\
+		if (!(Test-Path $$openSshDir)) { $$openSshDir = Join-Path $$env:WINDIR 'System32\OpenSSH' };\
+		$$ssh = Join-Path $$openSshDir 'ssh.exe';\
+		$$sshKeygen = Join-Path $$openSshDir 'ssh-keygen.exe';\
+		if (!(Test-Path $$ssh) -or !(Test-Path $$sshKeygen)) { Write-Error 'OpenSSH Client non installato'; exit 1 };\
+		$$vagrantKey = '.\$(VM_NAME)\.vagrant\machines\default\hyperv\private_key';\
+		if (!(Test-Path $$vagrantKey)) { Write-Error 'Chiave Vagrant non trovata. Eseguire prima make up'; exit 1 };\
+		$$keyDir = Join-Path $$HOME '.ssh\vagrant\$(VM_NAME)';\
+		$$privateKey = Join-Path $$keyDir 'id_ed25519';\
+		$$publicKey = $$privateKey + '.pub';\
+		New-Item -ItemType Directory -Path $$keyDir -Force | Out-Null;\
+		if (!(Test-Path $$privateKey)) { Copy-Item $$vagrantKey $$privateKey };\
+		if (!(Test-Path $$publicKey)) {\
+			& $$sshKeygen -y -f $$privateKey | Set-Content $$publicKey -Encoding ascii;\
+			if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE };\
+		};\
+		& $$ssh -i $$privateKey 'vagrant@$(VM_IP)'"
+
 destroy:
 	@powershell -Command "\
 		if (Test-Path '.\$(VM_NAME)') {\
 			cd '.\$(VM_NAME)';\
 			vagrant destroy -f;\
+			if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE };\
 			cd ..;\
 			Remove-Item -Path '.\$(VM_NAME)' -Recurse -Force\
+		};\
+		$$keyDir = Join-Path $$HOME '.ssh\vagrant\$(VM_NAME)';\
+		if (Test-Path $$keyDir) { Remove-Item $$keyDir -Recurse -Force };\
+		$$openSshDir = Join-Path $$env:WINDIR 'Sysnative\OpenSSH';\
+		if (!(Test-Path $$openSshDir)) { $$openSshDir = Join-Path $$env:WINDIR 'System32\OpenSSH' };\
+		$$sshKeygen = Join-Path $$openSshDir 'ssh-keygen.exe';\
+		$$knownHosts = Join-Path $$HOME '.ssh\known_hosts';\
+		if ((Test-Path $$sshKeygen) -and (Test-Path $$knownHosts)) {\
+			& $$sshKeygen -R '$(VM_IP)' -f $$knownHosts | Out-Null;\
+			if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE };\
+			Remove-Item ($$knownHosts + '.old') -Force -ErrorAction SilentlyContinue\
 		}"
 
 list:
