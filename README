@@ -2,6 +2,21 @@
 
 Eseguire i comandi da PowerShell come amministratore.
 
+## Utility Go
+
+La directory [`vmctl-go`](vmctl-go/README.md) contiene un client interattivo
+per gestire le VM da terminale. Permette di creare una nuova VM scegliendo tra
+Ubuntu 22 e Debian 9, avviarla, collegarsi via SSH e distruggerla.
+
+```powershell
+cd vmctl-go
+make build
+.\vmctl.exe
+```
+
+L'utility conserva immagini, configurazioni e dati Vagrant nella directory
+`%USERPROFILE%\.vagrant-vm`.
+
 ## Selezione della VM
 
 Ogni VM ha un file `configs/<nome>.env`. Il parametro `VM` indica al

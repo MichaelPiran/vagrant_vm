@@ -7,3 +7,12 @@
 !Vagrantfile
 !provisioners/
 !provisioners/*.sh
+
+# Utility Go: traccia solo sorgenti e file di progetto, non le build
+!vmctl-go/
+vmctl-go/*
+!vmctl-go/*.go
+!vmctl-go/go.mod
+!vmctl-go/go.sum
+!vmctl-go/Makefile
+!vmctl-go/README.md
