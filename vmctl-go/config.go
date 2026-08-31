@@ -41,6 +41,7 @@ var (
 	supportedImages = []Image{
 		{ID: "ubuntu22", Name: "Ubuntu 22", Box: "generic/ubuntu2204", Version: "4.3.12", Architecture: "amd64", Provisioner: "ubuntu"},
 		{ID: "debian9", Name: "Debian 9", Box: "generic/debian9", Version: "4.3.12", Architecture: "amd64", Provisioner: "debian"},
+		{ID: "arch", Name: "Arch Linux", Box: "generic/arch", Version: "4.3.12", Architecture: "amd64", Provisioner: "arch"},
 	}
 	validName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 )
@@ -101,7 +102,7 @@ func validateConfig(config VMConfig) error {
 			return nil
 		}
 	}
-	return errors.New("sono supportate solo le immagini Ubuntu 22 e Debian 9")
+	return errors.New("sono supportate solo le immagini Ubuntu 22, Debian 9 e Arch Linux")
 }
 
 func (app *App) saveConfig(config VMConfig) error {

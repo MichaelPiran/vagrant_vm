@@ -13,7 +13,7 @@ VM_SWITCH = ENV['VM_SWITCH']
 VM_PROVISIONER = ENV['VM_PROVISIONER']
 VM_IP_TIMEOUT = ENV['VM_IP_TIMEOUT'].to_i
 
-unless %w[debian ubuntu].include?(VM_PROVISIONER)
+unless %w[arch debian ubuntu].include?(VM_PROVISIONER)
   raise "VM_PROVISIONER non supportato: #{VM_PROVISIONER}"
 end
 
@@ -93,5 +93,28 @@ Gateway=$VM_GW
 DNS=1.1.1.1
 DNS=8.8.8.8
 NETWORKD
+systemctl restart systemd-networkd
+`
+
+const archProvisioner = `#!/bin/sh
+set -eux
+VM_IP=$1
+VM_GW=$2
+printf 'KEYMAP=it\n' >/etc/vconsole.conf
+systemctl enable sshd
+systemctl restart sshd
+IFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2; exit}')
+[ -n "$IFACE" ] || { echo "ERRORE: nessuna interfaccia trovata"; exit 1; }
+cat >/etc/systemd/network/20-vagrant-static.network <<NETWORKD
+[Match]
+Name=$IFACE
+
+[Network]
+Address=$VM_IP/24
+Gateway=$VM_GW
+DNS=1.1.1.1
+DNS=8.8.8.8
+NETWORKD
+systemctl enable systemd-networkd
 systemctl restart systemd-networkd
 `

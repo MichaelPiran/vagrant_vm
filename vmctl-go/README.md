@@ -42,7 +42,7 @@ selezionare e `Ctrl+C` per uscire.
 
 I dati sono conservati in `%USERPROFILE%\.vagrant-vm`:
 
-- `images`: catalogo delle immagini ammesse (Ubuntu 22 e Debian 9);
+- `images`: catalogo delle immagini ammesse (Ubuntu 22, Debian 9 e Arch Linux);
 - `configs`: configurazioni `.env` delle VM create;
 - `vms`: `Vagrantfile`, provisioner e dati `.vagrant` di ogni VM.
 

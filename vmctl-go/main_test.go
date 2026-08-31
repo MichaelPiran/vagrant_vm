@@ -53,6 +53,30 @@ func TestValidateConfigRejectsUnsupportedImage(t *testing.T) {
 	}
 }
 
+func TestValidateConfigAcceptsArch(t *testing.T) {
+	config := VMConfig{
+		Name: "arch-vm", Memory: 1024, MaxMemory: 2048, CPUs: 1,
+		IP: "192.168.0.20", Gateway: "192.168.0.1", Switch: "VMSwitchNat",
+		Box: "generic/arch", BoxVersion: "4.3.12", BoxArchitecture: "amd64",
+		Provisioner: "arch", IPTimeout: 120,
+	}
+	if err := validateConfig(config); err != nil {
+		t.Fatalf("configurazione Arch rifiutata: %v", err)
+	}
+}
+
+func TestWriteVMAssetsCreatesArchProvisioner(t *testing.T) {
+	app := &App{home: t.TempDir()}
+	config := VMConfig{Name: "arch-vm", Box: "generic/arch"}
+
+	if err := app.writeVMAssets(config); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(app.vmDir(config.Name), "provisioners", "arch.sh")); err != nil {
+		t.Fatalf("provisioner Arch non creato: %v", err)
+	}
+}
+
 func TestVMStatesDoesNotQueryHyperVForUncreatedVM(t *testing.T) {
 	app := &App{home: t.TempDir()}
 	config := VMConfig{Name: "not-created"}
