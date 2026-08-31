@@ -13,7 +13,7 @@ VM_SWITCH = ENV['VM_SWITCH']
 VM_PROVISIONER = ENV['VM_PROVISIONER']
 VM_IP_TIMEOUT = ENV['VM_IP_TIMEOUT'].to_i
 
-unless %w[arch debian ubuntu].include?(VM_PROVISIONER)
+unless %w[alpine arch debian ubuntu].include?(VM_PROVISIONER)
   raise "VM_PROVISIONER non supportato: #{VM_PROVISIONER}"
 end
 
@@ -117,4 +117,27 @@ DNS=8.8.8.8
 NETWORKD
 systemctl enable systemd-networkd
 systemctl restart systemd-networkd
+`
+
+const alpineProvisioner = `#!/bin/sh
+set -eux
+VM_IP=$1
+VM_GW=$2
+rc-update add sshd default
+rc-service sshd restart
+IFACE=$(ip -o link show | awk -F': ' '$2 != "lo" {print $2; exit}')
+[ -n "$IFACE" ] || { echo "ERRORE: nessuna interfaccia trovata"; exit 1; }
+cat >/etc/network/interfaces <<INTERFACES
+auto lo
+iface lo inet loopback
+
+auto $IFACE
+iface $IFACE inet static
+  address $VM_IP
+  netmask 255.255.255.0
+  gateway $VM_GW
+INTERFACES
+printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' >/etc/resolv.conf
+rc-update add networking boot
+rc-service networking restart
 `

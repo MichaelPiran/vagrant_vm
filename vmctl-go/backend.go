@@ -22,6 +22,7 @@ func (app *App) writeVMAssets(config VMConfig) error {
 		filepath.Join(directory, "provisioners", "ubuntu.sh"): ubuntuProvisioner,
 		filepath.Join(directory, "provisioners", "debian.sh"): debianProvisioner,
 		filepath.Join(directory, "provisioners", "arch.sh"):   archProvisioner,
+		filepath.Join(directory, "provisioners", "alpine.sh"): alpineProvisioner,
 		filepath.Join(directory, "info.txt"):                  fmt.Sprintf("Nome VM: %s\nImmagine: %s\nIP statico: %s\nRAM: %d MB\nvCPU: %d\nCreata il: %s\n", config.Name, config.Box, config.IP, config.Memory, config.CPUs, time.Now().Format("02/01/2006 15:04:05")),
 	}
 	for path, content := range assets {

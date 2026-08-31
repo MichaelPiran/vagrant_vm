@@ -11,7 +11,7 @@ VM_SWITCH = ENV['VM_SWITCH'] || "VMSwitchNat"
 VM_PROVISIONER = ENV['VM_PROVISIONER'] || "ubuntu"
 VM_IP_TIMEOUT = (ENV['VM_IP_TIMEOUT'] || "120").to_i
 
-unless %w[arch debian ubuntu].include?(VM_PROVISIONER)
+unless %w[alpine arch debian ubuntu].include?(VM_PROVISIONER)
   raise "VM_PROVISIONER non supportato: #{VM_PROVISIONER}"
 end
 
