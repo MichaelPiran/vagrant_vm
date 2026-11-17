@@ -1,14 +1,22 @@
-# Ignora tutto nel repository attuale
+# Ignore local state and generated files unless explicitly listed below.
 *
-# Whitelist
 !.gitignore
-!Makefile
-!README
-!Vagrantfile
-!provisioners/
-!provisioners/*.sh
+!README.md
 
-# Utility Go: traccia solo sorgenti e file di progetto, non le build
+!vagrant/
+vagrant/*
+!vagrant/Makefile
+!vagrant/README.md
+!vagrant/Vagrantfile
+!vagrant/manage.ps1
+!vagrant/tests/
+!vagrant/tests/*.ps1
+!vagrant/configs/
+vagrant/configs/*
+!vagrant/configs/example.env
+!vagrant/provisioners/
+!vagrant/provisioners/*.sh
+
 !vmctl-go/
 vmctl-go/*
 !vmctl-go/*.go
@@ -16,3 +24,16 @@ vmctl-go/*
 !vmctl-go/go.sum
 !vmctl-go/Makefile
 !vmctl-go/README.md
+
+!vmctl-hv/
+vmctl-hv/*
+!vmctl-hv/*.go
+!vmctl-hv/go.mod
+!vmctl-hv/go.sum
+!vmctl-hv/Makefile
+!vmctl-hv/README.md
+!vmctl-hv/hvctl.ps1
+!vmctl-hv/lib/
+!vmctl-hv/lib/*.ps1
+!vmctl-hv/tests/
+!vmctl-hv/tests/*.ps1

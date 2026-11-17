@@ -65,6 +65,18 @@ func TestValidateConfigAcceptsArch(t *testing.T) {
 	}
 }
 
+func TestValidateConfigAcceptsDebian12(t *testing.T) {
+	config := VMConfig{
+		Name: "debian12-vm", Memory: 1024, MaxMemory: 2048, CPUs: 1,
+		IP: "192.168.0.20", Gateway: "192.168.0.1", Switch: "VMSwitchNat",
+		Box: "generic/debian12", BoxVersion: "4.3.12", BoxArchitecture: "amd64",
+		Provisioner: "debian", IPTimeout: 120,
+	}
+	if err := validateConfig(config); err != nil {
+		t.Fatalf("configurazione Debian 12 rifiutata: %v", err)
+	}
+}
+
 func TestWriteVMAssetsCreatesArchProvisioner(t *testing.T) {
 	app := &App{home: t.TempDir()}
 	config := VMConfig{Name: "arch-vm", Box: "generic/arch"}

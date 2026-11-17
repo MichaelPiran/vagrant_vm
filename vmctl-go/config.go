@@ -41,6 +41,7 @@ var (
 	supportedImages = []Image{
 		{ID: "ubuntu22", Name: "Ubuntu 22", Box: "generic/ubuntu2204", Version: "4.3.12", Architecture: "amd64", Provisioner: "ubuntu"},
 		{ID: "debian9", Name: "Debian 9", Box: "generic/debian9", Version: "4.3.12", Architecture: "amd64", Provisioner: "debian"},
+		{ID: "debian12", Name: "Debian 12", Box: "generic/debian12", Version: "4.3.12", Architecture: "amd64", Provisioner: "debian"},
 		{ID: "arch", Name: "Arch Linux", Box: "generic/arch", Version: "4.3.12", Architecture: "amd64", Provisioner: "arch"},
 		{ID: "alpine318", Name: "Alpine Linux 3.18", Box: "generic/alpine318", Version: "4.3.12", Architecture: "amd64", Provisioner: "alpine"},
 	}
@@ -103,7 +104,7 @@ func validateConfig(config VMConfig) error {
 			return nil
 		}
 	}
-	return errors.New("sono supportate solo le immagini Ubuntu 22, Debian 9, Arch Linux e Alpine Linux 3.18")
+	return errors.New("sono supportate solo le immagini Ubuntu 22, Debian 9, Debian 12, Arch Linux e Alpine Linux 3.18")
 }
 
 func (app *App) saveConfig(config VMConfig) error {
