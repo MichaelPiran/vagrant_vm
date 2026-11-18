@@ -94,6 +94,8 @@ function New-VmWizard {
     $name = Read-Value 'Nome VM' "$image-vm"
     Assert-VmName $name
     if (Test-Path -LiteralPath (Get-VmDir $name)) { throw "La VM '$name' esiste gia'." }
+    $user = Read-Value 'Nome utente Linux'
+    Assert-GuestUser $user
     $memory = Read-IntValue 'Memoria iniziale (MB)' 1024 512
     $maxMemory = Read-IntValue 'Memoria massima (MB)' ([math]::Max(4096, $memory)) $memory
     $cpus = Read-IntValue 'vCPU' 2 1
@@ -118,7 +120,7 @@ function New-VmWizard {
 
     $settings = @{
         Name = $name; Image = $image; Ip = $ip; Gateway = $gateway; PrefixLength = $prefix; Dns = @('1.1.1.1', '8.8.8.8')
-        VmSwitch = $vmSwitch; MemoryMB = $memory; MaxMemoryMB = $maxMemory; Cpus = $cpus; DiskGB = $disk; User = 'dev'
+        VmSwitch = $vmSwitch; MemoryMB = $memory; MaxMemoryMB = $maxMemory; Cpus = $cpus; DiskGB = $disk; User = $user
     }
     New-HvVm -Settings $settings
     return $name

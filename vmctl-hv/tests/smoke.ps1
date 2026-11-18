@@ -24,7 +24,7 @@ Assert-True ($parsed['VM_NAME'] -eq 'debian12-vm' -and $script:LegacyBoxMap[$par
 
 $iso = Join-Path ([IO.Path]::GetTempPath()) 'hvctl-test-seed.iso'
 try {
-    New-SeedIso -IsoPath $iso -Name web1 -User dev -PublicKey 'ssh-ed25519 AAAA test' -Mac $mac -Ip 192.168.0.20 -PrefixLength 24 -Gateway 192.168.0.1 -Dns @('1.1.1.1')
+    New-SeedIso -IsoPath $iso -Name web1 -User test_user -PublicKey 'ssh-ed25519 AAAA test' -Mac $mac -Ip 192.168.0.20 -PrefixLength 24 -Gateway 192.168.0.1 -Dns @('1.1.1.1')
     $bytes = [IO.File]::ReadAllBytes($iso)
     $ascii = [Text.Encoding]::ASCII.GetString($bytes)
     $joliet = [Text.Encoding]::BigEndianUnicode.GetString($bytes) + [Text.Encoding]::BigEndianUnicode.GetString($bytes, 1, $bytes.Length - 2)
@@ -34,6 +34,7 @@ try {
         Assert-True ($joliet.Contains($file)) "$file presente (Joliet)"
     }
     Assert-True ($ascii.Contains('#cloud-config') -and $ascii.Contains('ssh-ed25519 AAAA test')) 'contenuto user-data'
+    Assert-True ($ascii.Contains("name: 'test_user'")) 'utente scelto presente nel seed'
 } finally {
     Remove-Item -LiteralPath $iso -Force -ErrorAction SilentlyContinue
 }

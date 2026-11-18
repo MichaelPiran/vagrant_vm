@@ -14,7 +14,7 @@ hostname: $Name
 manage_etc_hosts: true
 ssh_pwauth: false
 users:
-  - name: $User
+  - name: '$User'
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
     lock_passwd: true

@@ -8,8 +8,8 @@ Senza argomenti apre il menu interattivo (frecce, Invio, Esc/Ctrl+C per uscire).
 .EXAMPLE
 hvctl
 hvctl pull ubuntu26
-hvctl new web1 -Image ubuntu26 -Ip 192.168.0.20 -Gateway 192.168.0.1
-hvctl new debian12-vm -FromEnv ..\configs\debian12-vm.env
+hvctl new web1 -User mario -Image ubuntu26 -Ip 192.168.0.20 -Gateway 192.168.0.1
+hvctl new debian12-vm -User mario -FromEnv ..\configs\debian12-vm.env
 hvctl connect web1
 hvctl destroy web1
 #>
@@ -29,7 +29,7 @@ param(
     [int]$MaxMemoryMB = 4096,
     [int]$Cpus = 2,
     [int]$DiskGB = 20,
-    [string]$User = 'dev',
+    [string]$User,
     [string]$FromEnv,
     [int]$SshTimeoutSec = 180,
     [int]$Seconds = 0,
@@ -111,6 +111,7 @@ try {
         'pull'    { if ($Name) { Invoke-ImagePull -Id $Name -Force:$Force } else { Write-Host 'Specifica un''immagine. Disponibili:'; Show-Images } }
         'new' {
             if (-not $Name -and -not $FromEnv) { throw "Il comando 'new' richiede il nome della VM (o -FromEnv)." }
+            Assert-GuestUser $User
             $settings = Get-NewVmSettings
             New-HvVm -Settings $settings -NoStart:$NoStart -SshTimeoutSec $SshTimeoutSec
         }

@@ -25,6 +25,14 @@ function Get-VmDir { param([string]$Name) Join-Path (Join-Path (Get-HvHome) 'vms
 
 function Get-ImagesDir { Join-Path (Get-HvHome) 'images' }
 
+function Assert-GuestUser {
+    param([string]$User)
+    if ([string]::IsNullOrWhiteSpace($User)) { throw 'Specificare il nome utente Linux (-User).' }
+    if ($User -cnotmatch '\A[a-z_][a-z0-9_-]{0,31}\z') {
+        throw 'Nome utente Linux non valido: usare da 1 a 32 lettere minuscole, cifre, trattini o underscore, iniziando con una lettera o un underscore.'
+    }
+}
+
 function Assert-VmName {
     param([string]$Name)
     if ($Name -notmatch $script:ValidName) {

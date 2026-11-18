@@ -41,9 +41,9 @@ Gli stessi comandi sono disponibili da riga di comando:
 ```powershell
 hvctl images                  # elenco immagini disponibili e stato (anche: pull senza argomenti)
 hvctl pull ubuntu26
-hvctl new web1 -Image ubuntu26                                  # gateway e IP automatici
-hvctl new web1 -Image ubuntu26 -Ip 192.168.0.20 -Gateway 192.168.0.1
-hvctl new debian12-vm -FromEnv ..\configs\debian12-vm.env   # riusa i vecchi .env
+hvctl new web1 -User mario -Image ubuntu26                      # gateway e IP automatici
+hvctl new web1 -User mario -Image ubuntu26 -Ip 192.168.0.20 -Gateway 192.168.0.1
+hvctl new debian12-vm -User mario -FromEnv ..\configs\debian12-vm.env   # riusa i vecchi .env
 hvctl list
 hvctl connect web1
 hvctl console web1 -Start             # avvia la VM e mostra/salva il log di boot (porta seriale)
@@ -54,7 +54,11 @@ hvctl destroy web1 [-Force]
 ```
 
 Opzioni di `new`: `-Image`, `-Ip`, `-Gateway`, `-PrefixLength` (24), `-Dns`, `-VmSwitch` (VMSwitchNat),
-`-MemoryMB` (1024), `-MaxMemoryMB` (4096), `-Cpus` (2), `-DiskGB` (20), `-User` (dev), `-NoStart`.
+`-MemoryMB` (1024), `-MaxMemoryMB` (4096), `-Cpus` (2), `-DiskGB` (20), `-User` (obbligatorio), `-NoStart`.
+
+**Accesso alla VM.** Il menu chiede il nome utente Linux; da riga di comando lo si indica con `-User`.
+Non viene impostata alcuna password: la password dell'account e' bloccata e l'accesso SSH con password e' disabilitato.
+`hvctl connect` usa il nome scelto e la chiave SSH generata per la VM. L'utente puo' usare `sudo` senza password.
 
 **IP automatico.** Se `-Gateway` manca viene letto dall'adattatore `vEthernet (<switch>)` dell'host; se manca `-Ip`
 (e nel menu come valore suggerito) si sceglie il primo IP libero della subnet a partire da `.10`, escludendo:
