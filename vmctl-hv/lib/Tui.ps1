@@ -96,10 +96,15 @@ function New-VmWizard {
     if (Test-Path -LiteralPath (Get-VmDir $name)) { throw "La VM '$name' esiste gia'." }
     $user = Read-Value 'Nome utente Linux'
     Assert-GuestUser $user
-    $memory = Read-IntValue 'Memoria iniziale (MB)' 1024 512
+    $desktop = Confirm-Action 'Installare un ambiente desktop (GUI)? Richiede una password e piu risorse'
+    $passwordHash = $null
+    if ($desktop -or (Confirm-Action 'Impostare una password per il login da console Hyper-V? (SSH resta con sola chiave)')) {
+        $passwordHash = Read-ConsolePasswordHash
+    }
+    $memory = Read-IntValue 'Memoria iniziale (MB)' $(if ($desktop) { 2048 } else { 1024 }) $(if ($desktop) { 2048 } else { 512 })
     $maxMemory = Read-IntValue 'Memoria massima (MB)' ([math]::Max(4096, $memory)) $memory
     $cpus = Read-IntValue 'vCPU' 2 1
-    $disk = Read-IntValue 'Disco (GB)' 20 1
+    $disk = Read-IntValue 'Disco (GB)' $(if ($desktop) { 30 } else { 20 }) 1
 
     $switches = @(Get-VMSwitch -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })
     if ($switches.Count -gt 0) {
@@ -121,9 +126,36 @@ function New-VmWizard {
     $settings = @{
         Name = $name; Image = $image; Ip = $ip; Gateway = $gateway; PrefixLength = $prefix; Dns = @('1.1.1.1', '8.8.8.8')
         VmSwitch = $vmSwitch; MemoryMB = $memory; MaxMemoryMB = $maxMemory; Cpus = $cpus; DiskGB = $disk; User = $user
+        Timezone = $script:DefaultTimezone; KeyboardLayout = $script:DefaultKeyboardLayout; Desktop = $desktop; PasswordHash = $passwordHash
     }
     New-HvVm -Settings $settings
     return $name
+}
+
+function Select-HvSnapshot {
+    param([string]$Name)
+    $snapshots = @(Get-HvSnapshots $Name)
+    if ($snapshots.Count -eq 0) { Write-Host "Nessuno snapshot per $Name."; return $null }
+    $labels = @($snapshots | ForEach-Object { '{0,-28} {1}' -f $_.Name, $_.CreationTime.ToString('s') })
+    $pick = Select-Menu 'Snapshot' $labels ($snapshots.Count - 1)
+    if ($pick -lt 0) { return $null }
+    return $snapshots[$pick].Name
+}
+
+function Invoke-ResizeWizard {
+    param([string]$Name)
+    $config = Read-VmConfig $Name
+    $changes = @{}
+    $cpus = Read-IntValue 'vCPU' ([int]$config.Cpus) 1
+    $memory = Read-IntValue 'Memoria iniziale (MB)' ([int]$config.MemoryMB) 512
+    $maxMemory = Read-IntValue 'Memoria massima (MB)' ([math]::Max([int]$config.MaxMemoryMB, $memory)) $memory
+    $disk = Read-IntValue 'Disco (GB, solo ingrandimento)' ([int]$config.DiskGB) ([int]$config.DiskGB)
+    if ($cpus -ne $config.Cpus) { $changes.Cpus = $cpus }
+    if ($memory -ne $config.MemoryMB) { $changes.MemoryMB = $memory }
+    if ($maxMemory -ne $config.MaxMemoryMB) { $changes.MaxMemoryMB = $maxMemory }
+    if ($disk -ne $config.DiskGB) { $changes.DiskGB = $disk }
+    if ($changes.Count -eq 0) { Write-Host 'Nessuna modifica.'; return }
+    Set-HvVmResources -Name $Name -Changes $changes
 }
 
 function Show-VmMenu {
@@ -131,13 +163,21 @@ function Show-VmMenu {
     while ($true) {
         $state = (Get-VmStates)[$Name]
         if (-not $state) { $state = 'assente' }
-        $choice = Select-Menu "$Name ($state)" @('Avvia', 'Connetti via SSH', 'Ferma', 'Console (log di avvio)', 'Destroy', 'Indietro')
+        $choice = Select-Menu "$Name ($state)" @('Avvia', 'Connetti via SSH', 'Ferma', 'Console (log di avvio)', 'Snapshot', 'Ripristina snapshot', 'Ridimensiona', 'Destroy', 'Indietro')
         switch ($choice) {
             0 { Invoke-Guarded { Start-HvVm -Name $Name } }
             1 { Invoke-Guarded { Connect-HvVm -Name $Name } }
             2 { Invoke-Guarded { Stop-HvVm -Name $Name } }
             3 { Invoke-Guarded { Show-HvConsole -Name $Name -Start } }
-            4 {
+            4 { Invoke-Guarded { New-HvSnapshot -Name $Name -SnapshotName (Read-Host 'Nome snapshot (vuoto = automatico)').Trim() } }
+            5 {
+                Invoke-Guarded {
+                    $snapshot = Select-HvSnapshot $Name
+                    if ($snapshot -and (Confirm-Action "Ripristinare '$snapshot'? Le modifiche successive andranno perse.")) { Restore-HvSnapshot -Name $Name -SnapshotName $snapshot }
+                }
+            }
+            6 { Invoke-Guarded { Invoke-ResizeWizard $Name } }
+            7 {
                 if (Confirm-Action "Distruggere definitivamente ${Name}?") {
                     try { Remove-HvVm -Name $Name; return } catch { Write-Host "Errore: $($_.Exception.Message)" -ForegroundColor Red }
                 }

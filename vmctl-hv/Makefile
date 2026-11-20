@@ -20,6 +20,7 @@ test: smoke
 
 smoke:
 	@powershell -NoProfile -ExecutionPolicy Bypass -File tests\smoke.ps1
+	@powershell -NoProfile -ExecutionPolicy Bypass -File tests\features.ps1
 
 clean:
 	@powershell -NoProfile -Command "Remove-Item -Force '$(BINARY)' -ErrorAction SilentlyContinue"

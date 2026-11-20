@@ -24,8 +24,9 @@ function Get-SwitchNetwork {
 function Get-UsedIps {
     $used = New-Object 'System.Collections.Generic.HashSet[string]'
     foreach ($config in Get-AllVmConfigs) { [void]$used.Add([string]$config.Ip) }
-    # IP riservati dalle VM Vagrant/vmctl-go anche se spente.
-    $legacyDirs = @((Join-Path $PSScriptRoot '..\..\configs'), (Join-Path $env:USERPROFILE '.vagrant-vm\configs'))
+    # IP riservati dalle VM Vagrant/vmctl-go anche se spente. Cartelle extra: variabile HVCTL_LEGACY_CONFIGS (separatore ';').
+    $legacyDirs = @(Join-Path $env:USERPROFILE '.vagrant-vm\configs')
+    if ($env:HVCTL_LEGACY_CONFIGS) { $legacyDirs += $env:HVCTL_LEGACY_CONFIGS -split ';' | Where-Object { $_ } }
     foreach ($dir in $legacyDirs | Where-Object { Test-Path -LiteralPath $_ }) {
         foreach ($file in Get-ChildItem -LiteralPath $dir -Filter *.env) {
             $legacy = ConvertFrom-EnvFile $file.FullName
@@ -38,26 +39,60 @@ function Get-UsedIps {
     foreach ($neighbor in Get-NetNeighbor -AddressFamily IPv4 -ErrorAction SilentlyContinue) {
         if ($neighbor.State -notin 'Unreachable', 'Incomplete') { [void]$used.Add($neighbor.IPAddress) }
     }
-    return $used
+    return , $used
 }
 
-function Test-IpResponds {
-    param([string]$Ip)
-    $ping = New-Object System.Net.NetworkInformation.Ping
-    try { return ($ping.Send($Ip, 300).Status -eq 'Success') } catch { return $false } finally { $ping.Dispose() }
+# Ping in parallelo: restituisce l'insieme degli IP che rispondono.
+function Get-RespondingIps {
+    param([string[]]$Ips, [int]$TimeoutMs = 300)
+    $pings = New-Object System.Collections.Generic.List[System.Net.NetworkInformation.Ping]
+    $tasks = New-Object System.Collections.Generic.List[System.Threading.Tasks.Task]
+    $responding = New-Object 'System.Collections.Generic.HashSet[string]'
+    try {
+        foreach ($ip in $Ips) {
+            $ping = New-Object System.Net.NetworkInformation.Ping
+            $pings.Add($ping)
+            $tasks.Add($ping.SendPingAsync($ip, $TimeoutMs))
+        }
+        try { [void][System.Threading.Tasks.Task]::WaitAll($tasks.ToArray(), 10000) } catch { }
+        for ($i = 0; $i -lt $tasks.Count; $i++) {
+            $task = $tasks[$i]
+            if ($task.Status -eq 'RanToCompletion' -and $task.Result.Status -eq 'Success') { [void]$responding.Add($Ips[$i]) }
+        }
+    } finally {
+        foreach ($ping in $pings) { $ping.Dispose() }
+    }
+    return , $responding
 }
 
-# Primo IP libero nella subnet del gateway, a partire da .10.
+# Primo IP libero nella subnet del gateway, a partire da .10; i candidati vengono verificati a blocchi con ping paralleli.
 function Find-FreeIp {
-    param([string]$Gateway, [int]$PrefixLength = 24, [int]$FirstHost = 10)
+    param([string]$Gateway, [int]$PrefixLength = 24, [int]$FirstHost = 10, [int]$BatchSize = 32)
     $mask = [uint32]([math]::Pow(2, 32) - [math]::Pow(2, 32 - $PrefixLength))
     $network = (ConvertTo-IpUInt32 $Gateway) -band $mask
     $broadcast = $network -bor (-bnot $mask -band [uint32]::MaxValue)
     $used = Get-UsedIps
+    $batch = New-Object System.Collections.Generic.List[string]
     for ($candidate = $network + $FirstHost; $candidate -lt $broadcast; $candidate++) {
         $ip = ConvertFrom-IpUInt32 $candidate
         if ($ip -eq $Gateway -or $used.Contains($ip)) { continue }
-        if (-not (Test-IpResponds $ip)) { return $ip }
+        $batch.Add($ip)
+        if ($batch.Count -ge $BatchSize) {
+            $free = Get-FirstFreeIp $batch
+            if ($free) { return $free }
+            $batch.Clear()
+        }
+    }
+    if ($batch.Count -gt 0) {
+        $free = Get-FirstFreeIp $batch
+        if ($free) { return $free }
     }
     throw "Nessun IP libero nella subnet di $Gateway/$PrefixLength."
+}
+
+function Get-FirstFreeIp {
+    param([System.Collections.Generic.List[string]]$Candidates)
+    $responding = Get-RespondingIps $Candidates.ToArray()
+    foreach ($ip in $Candidates) { if (-not $responding.Contains($ip)) { return $ip } }
+    return $null
 }
