@@ -37,3 +37,9 @@ vmctl-hv/*
 !vmctl-hv/lib/*.ps1
 !vmctl-hv/tests/
 !vmctl-hv/tests/*.ps1
+
+!.github/
+.github/*
+!.github/workflows/
+.github/workflows/*
+!.github/workflows/vmctl-hv.yml
